@@ -3,15 +3,14 @@
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import html
 
-dash.register_page(__name__, path_template="/login", title="Login")
+dash.register_page(__name__, path_template="/", redirect_from=["/login"], title="Login")
 
 
 def layout():
     return dbc.Container(
         children=[
-            dcc.Location(id="url_login", refresh=False),
             dbc.Col(
                 children=[
                     dbc.Row(

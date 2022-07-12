@@ -83,9 +83,8 @@ nav_bar = dbc.NavbarSimple(
 
 app.layout = dbc.Container(
     children=[
-        dcc.Store(id="session", storage_type="session"),
         dcc.Location(id="url", refresh=False),
-        dcc.Location(id="url_logout", refresh=False),
+        dcc.Location(id="url_login", refresh=False),
         brand_bar,
         nav_bar,
         page_container,
@@ -108,15 +107,23 @@ def load_user(client_id):
         Output("url", "pathname"),
         Output("url", "refresh"),
     ],
-    Input("root", "loading_state"),
+    [
+        Input("root", "loading_state"),
+        Input("logout_button", "n_clicks"),
+    ],
 )
-def set_enviroment(load_st):
-    if current_user and not current_user.is_authenticated:
-        return ["", {"display": "none"}, "/login", True]
-    elif current_user and current_user.is_authenticated:
-        return [current_user.email, {"display": "block"}, "/home", True]
+def set_env_logout(load_st, bt_logout):
+    if current_user:
+        if current_user.is_authenticated:
+            if bt_logout:
+                logout_user()
+                return ["", {"display": "none"}, "/login", True]
+            else:
+                return [current_user.email, {"display": "block"}, "/home", True]
+        else:
+            return ["", {"display": "none"}, "/", False]
     else:
-        return ["", {"display": "none"}, "", False]
+        return ["", {"display": "none"}, "/", False]
 
 
 @app.callback(
@@ -132,30 +139,11 @@ def set_enviroment(load_st):
 )
 def set_login(bt_log, login, passwd):
     client = Client.query.filter_by(email=login).first()
-    url = ["/login", True]
-    if not client:
-        return url
-    elif not check_password_hash(client.passwd, passwd):
-        return url
-    else:
+    if client and check_password_hash(client.passwd, passwd):
         login_user(client, remember=True)
-        url = ["/home", True]
-        return url
-
-
-@app.callback(
-    [
-        Output("url_logout", "pathname"),
-        Output("url_logout", "refresh"),
-    ],
-    Input("logout_button", "n_clicks"),
-)
-def set_logout(bt_logout):
-    if bt_logout:
-        logout_user()
-        return ["/login", True]
+        return ["/home", True]
     else:
-        return ["", False]
+        return ["/", False]
 
 
 self_name = os.path.basename(__file__)[:-3]
